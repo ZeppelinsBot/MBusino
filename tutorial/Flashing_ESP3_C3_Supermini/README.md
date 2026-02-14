@@ -28,7 +28,7 @@ https://github.com/Zeppelin500/MBusino/tree/main/src/MBusinoNano5S/build/esp32.e
 * may you have to connect again
 * if connected, load all 3 .bin files as follows with the offset
 
-**MBusino**
+**MBusinoNano**
 
 * Offset 0x 0000    MBusinoNano.ino.bootloader.bin
 * Offset 0x 8000    MBusinoNano.ino.partitions.bin
