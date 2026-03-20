@@ -35,6 +35,10 @@ You should have received a copy of the GNU General Public License along with thi
 
 #define MBUSINO_VERSION "1.0.0"
 
+// EEPROM flag constants
+#define EEPROM_CREDENTIALS_OLD 500
+#define EEPROM_CREDENTIALS_NEW 501
+
 #define MBUS_ADDRESS 254
 
 
@@ -89,7 +93,7 @@ struct settings {
   uint32_t mbusInterval; 
   bool haAutodisc;
   bool telegramDebug;
-} userData = {"SSID","Password","MBusino","192.168.1.8",1883,5,"mqttUser","mqttPasword",5000,120000,true,false};
+} userData = {"SSID","Password","MBusino","192.168.1.8",1883,5,"mqttUser","mqttPassword",5000,120000,true,false};
 
 
 struct oldSettings {
@@ -105,7 +109,7 @@ struct oldSettings {
   uint32_t mbusInterval; 
   bool haAutodisc;
   bool telegramDebug;
-} oldUserData = {"SSID","Password","MBusino","192.168.1.8",1883,5,"mqttUser","mqttPasword",5000,120000,true,false};
+} oldUserData = {"SSID","Password","MBusino","192.168.1.8",1883,5,"mqttUser","mqttPassword",5000,120000,true,false};
 
 bool mqttcon = false;
 bool apMode = false;
@@ -176,26 +180,32 @@ void setup() {
 
   EEPROM.begin(512);
   EEPROM.get(eeAddrCredentialsSaved, credentialsSaved);
-  if(credentialsSaved == 500){  // 500 is the code that credentials are safed in an old version befor 1.0 (size of some variables has been changed)
+  if(credentialsSaved == EEPROM_CREDENTIALS_OLD){  // Old version before 1.0 (size of some variables has changed)
     EEPROM.get(100, oldUserData );
-    strcpy(userData.ssid,oldUserData.ssid);
-    strcpy(userData.password,oldUserData.password);
-    strcpy(userData.mbusinoName,oldUserData.mbusinoName);
-    strcpy(userData.broker,oldUserData.broker);
+    strncpy(userData.ssid, oldUserData.ssid, sizeof(userData.ssid) - 1);
+    userData.ssid[sizeof(userData.ssid) - 1] = '\0';
+    strncpy(userData.password, oldUserData.password, sizeof(userData.password) - 1);
+    userData.password[sizeof(userData.password) - 1] = '\0';
+    strncpy(userData.mbusinoName, oldUserData.mbusinoName, sizeof(userData.mbusinoName) - 1);
+    userData.mbusinoName[sizeof(userData.mbusinoName) - 1] = '\0';
+    strncpy(userData.broker, oldUserData.broker, sizeof(userData.broker) - 1);
+    userData.broker[sizeof(userData.broker) - 1] = '\0';
     userData.mqttPort = oldUserData.mqttPort;
     userData.extension = oldUserData.extension ;
-    strcpy(userData.mqttUser,oldUserData.mqttUser);
-    strcpy(userData.mqttPswrd,oldUserData.mqttPswrd); 
+    strncpy(userData.mqttUser, oldUserData.mqttUser, sizeof(userData.mqttUser) - 1);
+    userData.mqttUser[sizeof(userData.mqttUser) - 1] = '\0';
+    strncpy(userData.mqttPswrd, oldUserData.mqttPswrd, sizeof(userData.mqttPswrd) - 1);
+    userData.mqttPswrd[sizeof(userData.mqttPswrd) - 1] = '\0';
     userData.sensorInterval= oldUserData.sensorInterval;
     userData.mbusInterval = oldUserData.mbusInterval; 
     userData.haAutodisc = oldUserData.haAutodisc;
     userData.telegramDebug = oldUserData.telegramDebug;
 
     EEPROM.put(100, userData);
-    credentialsSaved = 501;
+    credentialsSaved = EEPROM_CREDENTIALS_NEW;
     EEPROM.put(eeAddrCredentialsSaved, credentialsSaved);
   }
-  else if(credentialsSaved == 501){  // 501 is the code that credentials are safed in a version after 1.0 (size of some variables has been changed)
+  else if(credentialsSaved == EEPROM_CREDENTIALS_NEW){  // Version after 1.0 (size of some variables has changed)
     EEPROM.get(100, userData );
   }
   EEPROM.commit();
@@ -205,7 +215,10 @@ void setup() {
     userData.telegramDebug = 0;
   }
 
-  sprintf(html_buffer, index_html,userData.ssid,userData.mbusinoName,userData.haAutodisc,userData.telegramDebug,userData.mbusInterval/1000,userData.broker,userData.mqttPort,userData.mqttUser);
+  int written = snprintf(html_buffer, sizeof(html_buffer), index_html,userData.ssid,userData.mbusinoName,userData.haAutodisc,userData.telegramDebug,userData.mbusInterval/1000,userData.broker,userData.mqttPort,userData.mqttUser);
+  if(written >= (int)sizeof(html_buffer)){
+    Serial.println("WARNING: HTML buffer overflow prevented!");
+  }
   
   WiFi.onEvent(WiFiEvent);
   WiFi.hostname(userData.mbusinoName);
@@ -338,7 +351,7 @@ void loop() {
     Serial.println("credentials received, save and restart soon");
     EEPROM.begin(512);
     EEPROM.put(100, userData);
-    credentialsSaved = 501;
+    credentialsSaved = EEPROM_CREDENTIALS_NEW;
     EEPROM.put(eeAddrCredentialsSaved, credentialsSaved);
     EEPROM.commit();
     EEPROM.end();
