@@ -3,6 +3,24 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.1] - 2026-03-20
+
+### Changed
+
+- Buffer safety and code clarity improvements (all firmware variants)
+- Merged LED flash for AP mode from upstream
+- Compiled all firmware variants with ESP32Async libraries (ESP Async WebServer 3.10.3, Async TCP 3.4.10)
+- Updated binary files for all boards
+
+### Dependencies
+
+- MBusinoLib 0.9.16
+- MBusCom 0.1.6
+- ArduinoJson 7.4.3
+- ESP Async WebServer 3.10.3 (ESP32Async)
+- Async TCP 3.4.10 (ESP32Async)
+- ESP Async TCP 2.0.0 (ESP8266 only)
+
 ## [1.0.0] - 2026-01-13
 
 ### Changed
