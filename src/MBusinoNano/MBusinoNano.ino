@@ -183,19 +183,13 @@ void setup() {
   if(credentialsSaved == EEPROM_CREDENTIALS_OLD){  // Old version before 1.0 (size of some variables has changed)
     EEPROM.get(100, oldUserData );
     strncpy(userData.ssid, oldUserData.ssid, sizeof(userData.ssid) - 1);
-    userData.ssid[sizeof(userData.ssid) - 1] = '\0';
     strncpy(userData.password, oldUserData.password, sizeof(userData.password) - 1);
-    userData.password[sizeof(userData.password) - 1] = '\0';
     strncpy(userData.mbusinoName, oldUserData.mbusinoName, sizeof(userData.mbusinoName) - 1);
-    userData.mbusinoName[sizeof(userData.mbusinoName) - 1] = '\0';
     strncpy(userData.broker, oldUserData.broker, sizeof(userData.broker) - 1);
-    userData.broker[sizeof(userData.broker) - 1] = '\0';
     userData.mqttPort = oldUserData.mqttPort;
     userData.extension = oldUserData.extension ;
     strncpy(userData.mqttUser, oldUserData.mqttUser, sizeof(userData.mqttUser) - 1);
-    userData.mqttUser[sizeof(userData.mqttUser) - 1] = '\0';
     strncpy(userData.mqttPswrd, oldUserData.mqttPswrd, sizeof(userData.mqttPswrd) - 1);
-    userData.mqttPswrd[sizeof(userData.mqttPswrd) - 1] = '\0';
     userData.sensorInterval= oldUserData.sensorInterval;
     userData.mbusInterval = oldUserData.mbusInterval; 
     userData.haAutodisc = oldUserData.haAutodisc;
@@ -215,10 +209,7 @@ void setup() {
     userData.telegramDebug = 0;
   }
 
-  int written = snprintf(html_buffer, sizeof(html_buffer), index_html,userData.ssid,userData.mbusinoName,userData.haAutodisc,userData.telegramDebug,userData.mbusInterval/1000,userData.broker,userData.mqttPort,userData.mqttUser);
-  if(written >= (int)sizeof(html_buffer)){
-    Serial.println("WARNING: HTML buffer overflow prevented!");
-  }
+  snprintf(html_buffer, sizeof(html_buffer), index_html,userData.ssid,userData.mbusinoName,userData.haAutodisc,userData.telegramDebug,userData.mbusInterval/1000,userData.broker,userData.mqttPort,userData.mqttUser);
   
   WiFi.onEvent(WiFiEvent);
   WiFi.hostname(userData.mbusinoName);
