@@ -6,13 +6,15 @@
  * 
  * Board: MakerGO C3 SuperMini (esp32:esp32:makergo_c3_supermini)
  * Uses W5500 Ethernet module via SPI.
+ * 
+ * NOTE: Ethernet only, no WiFi!
  */
 
 #include <ETH.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// --- Ethernet W5500 Config (same as MBusinoNano) ---
+// --- Ethernet W5500 Config ---
 #define ETH_PHY_TYPE     ETH_PHY_W5500
 #define ETH_PHY_ADDR     0
 #define ETH_PHY_CS       7
@@ -32,8 +34,8 @@ const char* mqtt_topic  = "mbusino/stress-test";
 
 // --- Test Config ---
 const int MSGS_PER_SECOND = 500;
-const int BATCH_SIZE = 20;           // messages per batch
-const int BATCH_DELAY_MS = (1000 * BATCH_SIZE) / MSGS_PER_SECOND; // ms between batches
+const int BATCH_SIZE = 20;
+const int BATCH_DELAY_MS = (1000 * BATCH_SIZE) / MSGS_PER_SECOND;
 
 // --- Globals ---
 WiFiClient ethClient;
@@ -43,18 +45,10 @@ unsigned long msg_sent = 0;
 unsigned long msg_failed = 0;
 unsigned long last_stats = 0;
 
-// --- Ethernet event handler ---
-void onEvent(arduino_event_id_t event) {
+void ethEvent(arduino_event_id_t event) {
   switch (event) {
-    case ARDUINO_EVENT_ETH_START:
-      Serial.println("ETH Started");
-      break;
-    case ARDUINO_EVENT_ETH_CONNECTED:
-      Serial.println("ETH Connected");
-      eth_connected = true;
-      break;
     case ARDUINO_EVENT_ETH_GOT_IP:
-      Serial.print("ETH Got IP: ");
+      Serial.print("ETH Connected, IP: ");
       Serial.println(ETH.localIP());
       eth_connected = true;
       break;
@@ -68,15 +62,17 @@ void onEvent(arduino_event_id_t event) {
 }
 
 void reconnectMQTT() {
-  while (!mqtt.connected()) {
-    Serial.print("Connecting MQTT...");
+  int attempts = 0;
+  while (!mqtt.connected() && attempts < 5) {
+    Serial.print("MQTT connecting...");
     if (mqtt.connect("mbusino-stress-test", mqtt_user, mqtt_pass)) {
-      Serial.println("connected!");
+      Serial.println("OK");
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("failed (");
       Serial.print(mqtt.state());
-      Serial.println(" retrying in 2s...");
-      delay(2000);
+      Serial.println(")");
+      delay(1000);
+      attempts++;
     }
   }
 }
@@ -85,30 +81,32 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n=== MBusino MQTT Stress Test ===");
-  Serial.printf("Target: %d messages/second\n", MSGS_PER_SECOND);
-  Serial.printf("Batch: %d msgs every %d ms\n", BATCH_SIZE, BATCH_DELAY_MS);
-  Serial.printf("Topic: %s\n", mqtt_topic);
+  Serial.printf("Target: %d msg/s, batch %d every %d ms\n", MSGS_PER_SECOND, BATCH_SIZE, BATCH_DELAY_MS);
+  Serial.printf("Broker: %s:%d\n", mqtt_server, mqtt_port);
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin("dummy", "dummy"); // needed for event system
+  // Event handler first
+  Network.onEvent(ethEvent);
 
-  Network.onEvent(onEvent);
-  delay(100);
-
-  // Ethernet with auto-negotiation disabled (10M full-duplex)
+  // Ethernet only — no WiFi
   ETH.setAutoNegotiation(false);
   ETH.setFullDuplex(true);
   ETH.setLinkSpeed(10);
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
-  delay(2000);
+
+  Serial.println("Waiting for ETH...");
+  delay(5000);
 
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setBufferSize(2048);
 }
 
 void loop() {
+  // Feed watchdog
+  yield();
+
   if (!eth_connected) {
     delay(1000);
+    yield();
     return;
   }
 
@@ -117,40 +115,30 @@ void loop() {
   }
   mqtt.loop();
 
-  // Send a batch of messages
+  // Send batch
   for (int i = 0; i < BATCH_SIZE; i++) {
     char payload[256];
     snprintf(payload, sizeof(payload),
-      "{\"msg\":%lu,\"ts\":%lu,\"energy_wh\":%lu,\"voltage_l1\":%u,"
-      "\"current_a\":%.2f,\"power_w\":%lu}",
-      msg_sent,
-      millis(),
-      random(0, 999999),
-      random(22000, 24000),
-      random(0, 100) / 10.0,
-      random(0, 5000)
-    );
+      "{\"msg\":%lu,\"ts\":%lu,\"e\":%lu,\"v\":%u,\"a\":%.2f,\"w\":%lu}",
+      msg_sent, millis(), random(0, 999999),
+      random(22000, 24000), random(0, 100) / 10.0, random(0, 5000));
 
     if (mqtt.publish(mqtt_topic, payload)) {
       msg_sent++;
     } else {
       msg_failed++;
     }
+    yield(); // feed watchdog between publishes
   }
 
-  // Delay between batches — feeds the watchdog
   delay(BATCH_DELAY_MS);
   yield();
 
-  // Print stats every 5 seconds
+  // Stats every 5s
   if (millis() - last_stats >= 5000) {
     last_stats = millis();
-    float actual_rate = (float)msg_sent / 5.0;
-    Serial.printf("[Stats] Sent: %lu | Failed: %lu | Rate: %.0f msg/s | ETH: %s | IP: %s\n",
-      msg_sent, msg_failed, actual_rate,
-      eth_connected ? "UP" : "DOWN",
-      ETH.localIP().toString().c_str()
-    );
+    float rate = (float)msg_sent / 5.0;
+    Serial.printf("[Stats] sent:%lu fail:%lu rate:%.0f/s\n", msg_sent, msg_failed, rate);
     msg_sent = 0;
     msg_failed = 0;
   }
