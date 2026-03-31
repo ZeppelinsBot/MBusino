@@ -24,10 +24,10 @@
 #define ETH_PHY_SPI_MOSI 11
 
 // --- MQTT Config ---
-const char* mqtt_server = "192.168.1.100";  // <-- Change to your broker IP
+const char* mqtt_server = "192.168.1.8";
 const int   mqtt_port   = 1883;
-const char* mqtt_user   = "";
-const char* mqtt_pass   = "";
+const char* mqtt_user   = "mqttUser";
+const char* mqtt_pass   = "mqttPassword";
 const char* mqtt_topic  = "mbusino/stress-test";
 
 // --- Test Config ---
