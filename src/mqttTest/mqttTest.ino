@@ -82,7 +82,7 @@ void setup() {
   disableCore0WDT();
 
   Serial.begin(115200);
-  delay(1000);
+  delay(3000); // C3 needs time to stabilize after boot
   Serial.println("\n=== MBusino MQTT Stress Test ===");
   Serial.printf("Target: %d msg/s, batch %d every %d ms\n", MSGS_PER_SECOND, BATCH_SIZE, BATCH_DELAY_MS);
   Serial.printf("Broker: %s:%d\n", mqtt_server, mqtt_port);
