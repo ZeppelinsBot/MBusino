@@ -99,9 +99,6 @@ void setup() {
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
   delay(2000);
 
-  // Turn off WiFi — we only use Ethernet
-  WiFi.mode(WIFI_OFF);
-
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setBufferSize(2048);
 }
