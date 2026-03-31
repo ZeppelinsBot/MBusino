@@ -78,6 +78,9 @@ void reconnectMQTT() {
 }
 
 void setup() {
+  // Disable task watchdog for stress test
+  disableCore0WDT();
+
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n=== MBusino MQTT Stress Test ===");
