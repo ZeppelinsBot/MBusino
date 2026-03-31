@@ -32,7 +32,8 @@ const char* mqtt_topic  = "mbusino/stress-test";
 
 // --- Test Config ---
 const int MSGS_PER_SECOND = 500;
-const int MSG_INTERVAL_US = 1000000 / MSGS_PER_SECOND; // microseconds between messages
+const int BATCH_SIZE = 20;           // messages per batch
+const int BATCH_DELAY_MS = (1000 * BATCH_SIZE) / MSGS_PER_SECOND; // ms between batches
 
 // --- Globals ---
 WiFiClient ethClient;
@@ -41,7 +42,6 @@ bool eth_connected = false;
 unsigned long msg_sent = 0;
 unsigned long msg_failed = 0;
 unsigned long last_stats = 0;
-unsigned long stats_interval = 5000; // print stats every 5s
 
 // --- Ethernet event handler ---
 void onEvent(arduino_event_id_t event) {
@@ -86,6 +86,7 @@ void setup() {
   delay(1000);
   Serial.println("\n=== MBusino MQTT Stress Test ===");
   Serial.printf("Target: %d messages/second\n", MSGS_PER_SECOND);
+  Serial.printf("Batch: %d msgs every %d ms\n", BATCH_SIZE, BATCH_DELAY_MS);
   Serial.printf("Topic: %s\n", mqtt_topic);
 
   WiFi.mode(WIFI_STA);
@@ -102,7 +103,7 @@ void setup() {
   delay(2000);
 
   mqtt.setServer(mqtt_server, mqtt_port);
-  mqtt.setBufferSize(2048); // larger buffer for bigger messages
+  mqtt.setBufferSize(2048);
 }
 
 void loop() {
@@ -116,24 +117,15 @@ void loop() {
   }
   mqtt.loop();
 
-  // Generate and send messages
-  unsigned long now_us = micros();
-  static unsigned long last_msg_us = 0;
-
-  if (now_us - last_msg_us >= MSG_INTERVAL_US) {
-    last_msg_us = now_us;
-
-    // Build a JSON payload similar to a real MBusino MQTT message
-    char payload[512];
+  // Send a batch of messages
+  for (int i = 0; i < BATCH_SIZE; i++) {
+    char payload[256];
     snprintf(payload, sizeof(payload),
       "{\"msg\":%lu,\"ts\":%lu,\"energy_wh\":%lu,\"voltage_l1\":%u,"
-      "\"voltage_l2\":%u,\"voltage_l3\":%u,\"current_a\":%.2f,"
-      "\"power_w\":%lu}",
+      "\"current_a\":%.2f,\"power_w\":%lu}",
       msg_sent,
       millis(),
       random(0, 999999),
-      random(22000, 24000),
-      random(22000, 24000),
       random(22000, 24000),
       random(0, 100) / 10.0,
       random(0, 5000)
@@ -146,11 +138,14 @@ void loop() {
     }
   }
 
+  // Delay between batches — feeds the watchdog
+  delay(BATCH_DELAY_MS);
+  yield();
+
   // Print stats every 5 seconds
-  unsigned long now_ms = millis();
-  if (now_ms - last_stats >= stats_interval) {
-    last_stats = now_ms;
-    float actual_rate = (float)(msg_sent + msg_failed) / ((float)stats_interval / 1000.0);
+  if (millis() - last_stats >= 5000) {
+    last_stats = millis();
+    float actual_rate = (float)msg_sent / 5.0;
     Serial.printf("[Stats] Sent: %lu | Failed: %lu | Rate: %.0f msg/s | ETH: %s | IP: %s\n",
       msg_sent, msg_failed, actual_rate,
       eth_connected ? "UP" : "DOWN",
