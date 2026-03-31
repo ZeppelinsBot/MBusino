@@ -91,13 +91,17 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin("dummy_ssid", "dummy_pass");
   delay(100);
+  yield();
 
   // Ethernet with auto-negotiation disabled (10M full-duplex)
   ETH.setAutoNegotiation(false);
   ETH.setFullDuplex(true);
   ETH.setLinkSpeed(10);
+  yield();
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
-  delay(2000);
+  yield();
+  delay(1000);
+  yield();
 
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setBufferSize(2048);
