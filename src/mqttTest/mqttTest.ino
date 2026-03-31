@@ -84,17 +84,23 @@ void setup() {
   Serial.printf("Target: %d msg/s, batch %d every %d ms\n", MSGS_PER_SECOND, BATCH_SIZE, BATCH_DELAY_MS);
   Serial.printf("Broker: %s:%d\n", mqtt_server, mqtt_port);
 
-  // Event handler first
+  // Event handler
   Network.onEvent(ethEvent);
 
-  // Ethernet only — no WiFi
+  // WiFi init needed before ETH.begin on C3 (even if not using WiFi)
+  WiFi.mode(WIFI_STA);
+  WiFi.begin("dummy_ssid", "dummy_pass");
+  delay(100);
+
+  // Ethernet with auto-negotiation disabled (10M full-duplex)
   ETH.setAutoNegotiation(false);
   ETH.setFullDuplex(true);
   ETH.setLinkSpeed(10);
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
+  delay(2000);
 
-  Serial.println("Waiting for ETH...");
-  delay(5000);
+  // Turn off WiFi — we only use Ethernet
+  WiFi.mode(WIFI_OFF);
 
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setBufferSize(2048);
