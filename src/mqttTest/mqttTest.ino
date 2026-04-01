@@ -68,11 +68,15 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin("dummy_ssid", "dummy_pass");
-  delay(100);
+  for (int i = 0; i < 20; i++) { delay(50); yield(); }
+
+  // Feed watchdog heavily before ETH.begin
+  for (int i = 0; i < 10; i++) { yield(); delay(100); }
 
   ETH.setAutoNegotiation(false);
   ETH.setFullDuplex(true);
   ETH.setLinkSpeed(10);
+  for (int i = 0; i < 10; i++) { yield(); delay(50); }
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
 
   Serial.println("Waiting for ETH link...");
