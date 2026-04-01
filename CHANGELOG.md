@@ -3,6 +3,16 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.2] - 2026-04-01
+
+### Fixed
+
+- W5500 Ethernet auto-negotiation: disable auto-negotiation and force 10BASE-T full-duplex before each ETH.begin() call. Fixes connection failures with strict gigabit equipment (Fritzbox 7590, PoE extenders, managed switches). Applied to MBusinoNano and MBusinoNano5S.
+
+### Changed
+
+- Updated binary files for MBusinoNano and MBusinoNano5S (C3 SuperMini)
+
 ## [1.0.1] - 2026-03-20
 
 ### Changed
