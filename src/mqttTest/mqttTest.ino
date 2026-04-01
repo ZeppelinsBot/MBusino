@@ -1,18 +1,13 @@
 /*
  * MBusino MQTT Stress Test
- * 
- * Sends a configurable number of MQTT messages per second
- * to test Ethernet throughput at 10BASE-T / 100BASE-T.
- * 
- * Board: MakerGO C3 SuperMini (esp32:esp32:makergo_c3_supermini)
- * Uses W5500 Ethernet module via SPI.
  */
 
+#include <SPI.h>
+#include <Arduino.h>
 #include <ETH.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// --- Ethernet W5500 Config ---
 #define ETH_PHY_TYPE     ETH_PHY_W5500
 #define ETH_PHY_ADDR     0
 #define ETH_PHY_CS       7
@@ -23,17 +18,13 @@
 #define ETH_PHY_SPI_MISO 12
 #define ETH_PHY_SPI_MOSI 11
 
-// --- MQTT Config ---
 const char* mqtt_server = "192.168.1.8";
 const int   mqtt_port   = 1883;
 const char* mqtt_user   = "mqttUser";
 const char* mqtt_pass   = "mqttPassword";
 const char* mqtt_topic  = "mbusino/stress-test";
+const int   MSGS_PER_SECOND = 1;
 
-// --- Test Config ---
-const int MSGS_PER_SECOND = 1; // start with 1, increase later
-
-// --- Globals ---
 WiFiClient ethClient;
 PubSubClient mqtt(ethClient);
 bool eth_connected = false;
@@ -58,86 +49,69 @@ void ethEvent(arduino_event_id_t event) {
   }
 }
 
+void WiFiEvent(WiFiEvent_t event) {
+  // dummy — needed like MBusinoNano
+}
+
 void setup() {
   Serial.begin(115200);
   delay(3000);
   Serial.println("\n=== MBusino MQTT Stress Test ===");
-  Serial.printf("Target: %d msg/s\n", MSGS_PER_SECOND);
 
-  Network.onEvent(ethEvent);
-
+  WiFi.onEvent(WiFiEvent);
   WiFi.mode(WIFI_STA);
   WiFi.begin("dummy_ssid", "dummy_pass");
-  for (int i = 0; i < 20; i++) { delay(50); yield(); }
 
-  // Feed watchdog heavily before ETH.begin
-  for (int i = 0; i < 10; i++) { yield(); delay(100); }
-
+  Network.onEvent(ethEvent);
+  delay(100);
   ETH.setAutoNegotiation(false);
   ETH.setFullDuplex(true);
   ETH.setLinkSpeed(10);
-  for (int i = 0; i < 10; i++) { yield(); delay(50); }
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
+  delay(2000);
 
-  Serial.println("Waiting for ETH link...");
+  Serial.println("Ready");
 }
 
 void loop() {
-  static bool ready = false;
-
-  // Phase 1: Wait for Ethernet
   if (!eth_connected) {
     delay(500);
     return;
   }
 
-  // Phase 2: Connect MQTT (once)
   if (!mqtt_connected) {
-    Serial.print("Connecting MQTT...");
+    Serial.print("MQTT...");
     mqtt.setServer(mqtt_server, mqtt_port);
     mqtt.setBufferSize(2048);
     if (mqtt.connect("mbusino-stress-test", mqtt_user, mqtt_pass)) {
       mqtt_connected = true;
-      ready = true;
       Serial.println("OK");
     } else {
-      Serial.print("failed (");
-      Serial.print(mqtt.state());
-      Serial.println("), retry in 2s");
+      Serial.print("fail ");
+      Serial.println(mqtt.state());
       delay(2000);
       return;
     }
   }
 
-  // Phase 3: Send messages
   mqtt.loop();
 
   static unsigned long last_msg = 0;
-  unsigned long interval = 1000 / MSGS_PER_SECOND;
-
-  if (millis() - last_msg >= interval) {
+  if (millis() - last_msg >= (1000 / MSGS_PER_SECOND)) {
     last_msg = millis();
-
-    char payload[256];
-    snprintf(payload, sizeof(payload),
-      "{\"msg\":%lu,\"ts\":%lu,\"e\":%lu,\"v\":%u}",
-      msg_sent, millis(), random(0, 999999), random(22000, 24000));
-
-    if (mqtt.publish(mqtt_topic, payload)) {
+    char p[128];
+    snprintf(p, sizeof(p), "{\"m\":%lu,\"t\":%lu}", msg_sent, millis());
+    if (mqtt.publish(mqtt_topic, p)) {
       msg_sent++;
     } else {
-      Serial.println("MQTT publish failed!");
-      mqtt_connected = false; // reconnect
+      Serial.println("pub fail");
+      mqtt_connected = false;
     }
   }
 
-  // Stats every 10s
   if (millis() - last_stats >= 10000) {
     last_stats = millis();
-    Serial.printf("[Stats] sent: %lu | ETH: %s | MQTT: %s\n",
-      msg_sent,
-      eth_connected ? "UP" : "DOWN",
-      mqtt_connected ? "OK" : "OFF");
+    Serial.printf("[Stats] sent: %lu\n", msg_sent);
     msg_sent = 0;
   }
 }
