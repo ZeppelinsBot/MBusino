@@ -1,12 +1,16 @@
 /*
  * MBusino MQTT Stress Test
+ * Board: MakerGO C3 SuperMini (esp32:esp32:makergo_c3_supermini)
  */
 
 #include <SPI.h>
 #include <Arduino.h>
+#include <Wire.h>
 #include <ETH.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
 
 #define ETH_PHY_TYPE     ETH_PHY_W5500
 #define ETH_PHY_ADDR     0
@@ -23,7 +27,6 @@ const int   mqtt_port   = 1883;
 const char* mqtt_user   = "mqttUser";
 const char* mqtt_pass   = "mqttPassword";
 const char* mqtt_topic  = "mbusino/stress-test";
-const int   MSGS_PER_SECOND = 1;
 
 WiFiClient ethClient;
 PubSubClient mqtt(ethClient);
@@ -49,9 +52,9 @@ void ethEvent(arduino_event_id_t event) {
   }
 }
 
-void WiFiEvent(WiFiEvent_t event) {
-  // dummy — needed like MBusinoNano
-}
+void WiFiEvent(WiFiEvent_t event) { }
+
+AsyncWebServer server(80); // dummy server, keeps AsyncTCP alive
 
 void setup() {
   Serial.begin(115200);
@@ -97,7 +100,7 @@ void loop() {
   mqtt.loop();
 
   static unsigned long last_msg = 0;
-  if (millis() - last_msg >= (1000 / MSGS_PER_SECOND)) {
+  if (millis() - last_msg >= 1000) {
     last_msg = millis();
     char p[128];
     snprintf(p, sizeof(p), "{\"m\":%lu,\"t\":%lu}", msg_sent, millis());
