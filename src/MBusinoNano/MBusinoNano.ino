@@ -220,9 +220,10 @@ void setup() {
   
   Network.onEvent(onEvent);
   delay(100);
-  //ETH.setLinkSpeed(10);
+  ETH.setAutoNegotiation(false);
+  ETH.setFullDuplex(true);
+  ETH.setLinkSpeed(10);
   ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI);
-  //ETH.setLinkSpeed(10);
   delay(2000);
 
   byte tries = 0;
@@ -321,6 +322,9 @@ void loop() {
     delay(200);
     //SPI.end();
     delay(200);
+    ETH.setAutoNegotiation(false);
+    ETH.setFullDuplex(true);
+    ETH.setLinkSpeed(10);
     ETH.begin(ETH_PHY_TYPE, ETH_PHY_ADDR, ETH_PHY_CS, ETH_PHY_IRQ, ETH_PHY_RST, ETH_PHY_SPI_HOST, ETH_PHY_SPI_SCK, ETH_PHY_SPI_MISO, ETH_PHY_SPI_MOSI,16);
   }
 /*
