@@ -319,7 +319,7 @@ void loop() {
   static unsigned long stressLastMsg = 0;
   static unsigned long stressLastStats = 0;
 
-  if (client.connected() && millis() - stressLastMsg >= 1000) {
+  if (client.connected() && millis() - stressLastMsg >= 2) {
     stressLastMsg = millis();
     char p[128];
     snprintf(p, sizeof(p), "{\"stress_msg\":%lu,\"ts\":%lu}", stressMsgSent, millis());
