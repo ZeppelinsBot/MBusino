@@ -581,8 +581,10 @@ void loop() {
             adMbusMessageCounter++;
             int packet_size = mbus_data[1] + 6;
 
-            // Decode header and records into one shared JsonDocument
+            // one shared JsonDocument
             JsonDocument doc;
+
+            // Decode header into shared doc
             JsonObject headerObj = doc["header"].to<JsonObject>();
             bool headerOk = payload.decodeHeader(mbus_data, packet_size, headerObj);
 
@@ -601,8 +603,6 @@ void loop() {
             // test ende -----------------------------------------------------------------------------------------
             client.publish(String(String(userData.mbusinoName) + "/MBus/error").c_str(), String(payload.getError()).c_str());
             client.publish(String(String(userData.mbusinoName) + "/MBus/jsonstring").c_str(), jsonstring);
-            uint8_t address = mbus_data[5];
-            client.publish(String(String(userData.mbusinoName) + "/MBus/address").c_str(), String(address).c_str());
 
             client.publish(String(String(userData.mbusinoName) + "/MBus/FCB").c_str(), String(fcb).c_str());
 
