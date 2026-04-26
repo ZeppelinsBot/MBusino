@@ -579,26 +579,57 @@ void loop() {
             }
 
             adMbusMessageCounter++;
-            int packet_size = mbus_data[1] + 6;  
+            int packet_size = mbus_data[1] + 6;
+
+            // Decode M-Bus header and publish via MQTT
+            JsonDocument headerDoc;
+            JsonObject headerObj = headerDoc.to<JsonObject>();
+            bool headerOk = payload.decodeHeader(mbus_data, packet_size, headerObj);
+            if (headerOk) {
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/address").c_str(),
+                             String(headerObj["a_field"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/id").c_str(),
+                             headerObj["id"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/manufacturer").c_str(),
+                             headerObj["manufacturer"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/medium").c_str(),
+                             headerObj["medium"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/version").c_str(),
+                             String(headerObj["version"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/status").c_str(),
+                             String(headerObj["status"].as<int>(), HEX).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/access_counter").c_str(),
+                             String(headerObj["access_counter"].as<int>()).c_str());
+              // Status details
+              JsonObject statusDetails = headerObj["status_details"];
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/battery_low").c_str(),
+                             statusDetails["battery_low"].as<bool>() ? "true" : "false");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/temporary_error").c_str(),
+                             statusDetails["temporary_error"].as<bool>() ? "true" : "false");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/permanent_error").c_str(),
+                             statusDetails["permanent_error"].as<bool>() ? "true" : "false");
+            }
+
+            // Decode M-Bus records
             JsonDocument jsonBuffer;
-            JsonArray root = jsonBuffer.add<JsonArray>();  
-            fields = payload.decode(&mbus_data[Startadd], packet_size - Startadd - 2, root); 
+            JsonArray root = jsonBuffer.add<JsonArray>();
+            fields = payload.decode(&mbus_data[Startadd], packet_size - Startadd - 2, root);
             serializeJson(root, jsonstring); // store the json in a global array
             // test -----------------------------------------------------------------------------------------
             uint16_t arraycounter = 0;
             uint8_t findTheTerminator = 1;
             while(findTheTerminator != 0){
               findTheTerminator = jsonstring[arraycounter];
-              arraycounter++;  
+              arraycounter++;
             }
-            client.publish(String(String(userData.mbusinoName) + "/MBus/jsonlen").c_str(), String(arraycounter).c_str());  
+            client.publish(String(String(userData.mbusinoName) + "/MBus/jsonlen").c_str(), String(arraycounter).c_str());
             // test ende -----------------------------------------------------------------------------------------
-            client.publish(String(String(userData.mbusinoName) + "/MBus/error").c_str(), String(payload.getError()).c_str());  // kann auskommentiert werden wenn es läuft
+            client.publish(String(String(userData.mbusinoName) + "/MBus/error").c_str(), String(payload.getError()).c_str());
             client.publish(String(String(userData.mbusinoName) + "/MBus/jsonstring").c_str(), jsonstring);
             uint8_t address = mbus_data[5];
-            client.publish(String(String(userData.mbusinoName) + "/MBus/address").c_str(), String(address).c_str());  
+            client.publish(String(String(userData.mbusinoName) + "/MBus/address").c_str(), String(address).c_str());
 
-            client.publish(String(String(userData.mbusinoName) + "/MBus/FCB").c_str(), String(fcb).c_str());  
+            client.publish(String(String(userData.mbusinoName) + "/MBus/FCB").c_str(), String(fcb).c_str());
 
             heapCalc();
             if(mbus_data[12]==0x14&&mbus_data[11]==0xC5){
