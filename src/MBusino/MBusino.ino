@@ -585,30 +585,6 @@ void loop() {
             JsonDocument doc;
             JsonObject headerObj = doc["header"].to<JsonObject>();
             bool headerOk = payload.decodeHeader(mbus_data, packet_size, headerObj);
-            if (headerOk) {
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/address").c_str(),
-                             String(headerObj["a_field"].as<int>()).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/id").c_str(),
-                             headerObj["id"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/manufacturer").c_str(),
-                             headerObj["manufacturer"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/medium").c_str(),
-                             headerObj["medium"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/version").c_str(),
-                             String(headerObj["version"].as<int>()).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/status").c_str(),
-                             String(headerObj["status"].as<int>(), HEX).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/access_counter").c_str(),
-                             String(headerObj["access_counter"].as<int>()).c_str());
-              // Status details
-              JsonObject statusDetails = headerObj["status_details"];
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/battery_low").c_str(),
-                             statusDetails["battery_low"].as<bool>() ? "true" : "false");
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/temporary_error").c_str(),
-                             statusDetails["temporary_error"].as<bool>() ? "true" : "false");
-              client.publish(String(String(userData.mbusinoName) + "/MBus/header/permanent_error").c_str(),
-                             statusDetails["permanent_error"].as<bool>() ? "true" : "false");
-            }
 
             // Decode M-Bus records into shared doc
             JsonArray recordsArr = doc["records"].to<JsonArray>();
@@ -653,8 +629,36 @@ void loop() {
             mbusLoopStatus = 0;
             JsonDocument doc;
             deserializeJson(doc, jsonstring); // load the json from a global array
+            JsonObject headerObj = doc["header"];
             JsonArray recordsArr = doc["records"];
             jsonstring[0] = 0;
+
+            // Publish M-Bus header via MQTT
+            if (!headerObj.isNull()) {
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/address").c_str(),
+                             String(headerObj["a_field"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/id").c_str(),
+                             headerObj["id"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/manufacturer").c_str(),
+                             headerObj["manufacturer"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/medium").c_str(),
+                             headerObj["medium"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/version").c_str(),
+                             String(headerObj["version"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/status").c_str(),
+                             String(headerObj["status"].as<int>(), HEX).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/access_counter").c_str(),
+                             String(headerObj["access_counter"].as<int>()).c_str());
+              // Status details
+              JsonObject statusDetails = headerObj["status_details"];
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/battery_low").c_str(),
+                             statusDetails["battery_low"].as<bool>() ? "true" : "false");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/temporary_error").c_str(),
+                             statusDetails["temporary_error"].as<bool>() ? "true" : "false");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/header/permanent_error").c_str(),
+                             statusDetails["permanent_error"].as<bool>() ? "true" : "false");
+            }
+
             client.publish(String(String(userData.mbusinoName) + "/debug/adMbusMessageCounter").c_str(), String(adMbusMessageCounter).c_str()); 
 
             for (uint8_t i=0; i<fields; i++) {
