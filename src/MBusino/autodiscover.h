@@ -24,6 +24,51 @@ const char adTopicSensor[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/Sensor
 const char adValueBME[] PROGMEM = R"rawliteral({"unique_id":"%s__BME_%s","default_entity_id":"sensor.%s_BME_%s","state_topic":"%s/bme/%s","name":"%s","value_template":"{{value_json if value_json is defined else 0}}","unit_of_meas":"%s","state_class":"measurement","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},"device_class":"%s","availability_mode":"all"})rawliteral";
 const char adTopicBME[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/%s/config)rawliteral";
 
+// --- Header autodiscovery ---
+struct headerAdField {
+  const char* topicSuffix;
+  const char* haName;
+  const char* deviceClass;
+};
+
+static const headerAdField headerAdFields[] = {
+  {"address",         "Address",         ""},
+  {"id",              "ID",              ""},
+  {"manufacturer",    "Manufacturer",    ""},
+  {"medium",          "Medium",          ""},
+  {"version",         "Version",         ""},
+  {"status",          "Status",          ""},
+  {"access_counter",  "Access Counter",  ""},
+  {"battery_low",     "Battery Low",     "battery"},
+  {"temporary_error", "Temporary Error", "problem"},
+  {"permanent_error", "Permanent Error", "problem"},
+};
+
+#define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
+
+const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"M-Bus %s","value_template":"{{value_json if value_json is defined else 0}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
+const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%s/config)rawliteral";
+
+void haHandoverHeader(){
+  for(uint8_t i = 0; i < HEADER_AD_FIELDS_COUNT; i++){
+    char dcString[50] = {0};
+    if(headerAdFields[i].deviceClass[0] != 0){
+      sprintf(dcString, "\"device_class\": \"%s\",", headerAdFields[i].deviceClass);
+    }
+    sprintf(adVariables.bufferValue, adValueHeader,
+      userData.mbusinoName, headerAdFields[i].topicSuffix,
+      userData.mbusinoName, headerAdFields[i].topicSuffix,
+      userData.mbusinoName, headerAdFields[i].topicSuffix,
+      headerAdFields[i].haName,
+      userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION,
+      dcString);
+    sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, headerAdFields[i].topicSuffix);
+    client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);
+    adVariables.bufferTopic[0] = 0;
+    adVariables.bufferValue[0] = 0;
+  }
+}
+
 void haHandoverMbus(uint8_t haCounter, bool engelmann){ // haCounter is the "i+1" at the for() in main
 
   if(adVariables.deviceClass[0] != 0){

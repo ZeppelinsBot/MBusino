@@ -659,6 +659,11 @@ void loop() {
                              statusDetails["permanent_error"].as<bool>() ? "true" : "false");
             }
 
+            // Header autodiscovery (every 3rd message)
+            if(userData.haAutodisc == true && adMbusMessageCounter == 3){
+              haHandoverHeader();
+            }
+
             client.publish(String(String(userData.mbusinoName) + "/debug/adMbusMessageCounter").c_str(), String(adMbusMessageCounter).c_str()); 
 
             for (uint8_t i=0; i<fields; i++) {
