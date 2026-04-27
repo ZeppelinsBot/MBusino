@@ -51,8 +51,6 @@ static const headerAdField headerAdFields[] = {
 const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"%s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
 const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%s/config)rawliteral";
 
-const char adValueHeaderBinary[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s_bin","default_entity_id":"binary_sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"%s","value_template":"{{value}}","device":{"ids": ["%s"],"name": "%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
-const char adTopicHeaderBinary[] PROGMEM = R"rawliteral(homeassistant/binary_sensor/%s/header_%s/config)rawliteral";
 
 void haHandoverHeader(){
   for(uint8_t i = 0; i < HEADER_AD_FIELDS_COUNT; i++){
@@ -60,28 +58,14 @@ void haHandoverHeader(){
     if(headerAdFields[i].deviceClass[0] != 0){
       sprintf(dcString, "\"device_class\": \"%s\",", headerAdFields[i].deviceClass);
     }
-    if(headerAdFields[i].deviceClass[0] != 0){
-      sprintf(adVariables.bufferValue, adValueHeaderBinary,
+    sprintf(adVariables.bufferValue, adValueHeader,
       userData.mbusinoName, headerAdFields[i].topicSuffix,
       userData.mbusinoName, headerAdFields[i].topicSuffix,
       userData.mbusinoName, headerAdFields[i].topicSuffix,
       headerAdFields[i].haName,
       userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION,
       dcString);
-    }else{
-      sprintf(adVariables.bufferValue, adValueHeader,
-      userData.mbusinoName, headerAdFields[i].topicSuffix,
-      userData.mbusinoName, headerAdFields[i].topicSuffix,
-      userData.mbusinoName, headerAdFields[i].topicSuffix,
-      headerAdFields[i].haName,
-      userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION,
-      dcString);
-    }
-    if(headerAdFields[i].deviceClass[0] != 0){
-      sprintf(adVariables.bufferTopic, adTopicHeaderBinary, userData.mbusinoName, headerAdFields[i].topicSuffix);
-    }else{
-      sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, headerAdFields[i].topicSuffix);
-    }
+    sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, headerAdFields[i].topicSuffix);
     client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);
     adVariables.bufferTopic[0] = 0;
     adVariables.bufferValue[0] = 0;
