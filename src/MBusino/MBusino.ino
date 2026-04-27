@@ -652,11 +652,11 @@ void loop() {
               // Status details
               JsonObject statusDetails = headerObj["status_details"];
               client.publish(String(String(userData.mbusinoName) + "/MBus/header/battery_low").c_str(),
-                             statusDetails["battery_low"].as<bool>() ? "true" : "false");
+                             statusDetails["battery_low"].as<bool>() ? "on" : "off");
               client.publish(String(String(userData.mbusinoName) + "/MBus/header/temporary_error").c_str(),
-                             statusDetails["temporary_error"].as<bool>() ? "true" : "false");
+                             statusDetails["temporary_error"].as<bool>() ? "on" : "off");
               client.publish(String(String(userData.mbusinoName) + "/MBus/header/permanent_error").c_str(),
-                             statusDetails["permanent_error"].as<bool>() ? "true" : "false");
+                             statusDetails["permanent_error"].as<bool>() ? "on" : "off");
             }
 
             // Header autodiscovery (every 3rd message)
