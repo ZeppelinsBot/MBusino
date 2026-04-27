@@ -6,6 +6,8 @@ struct autodiscover {
   char stateClass[30] = {0};
   char deviceClass[30] = {0};
   char deviceClassString[50] = {0};
+  char stateClassString[50] = {0};
+  char unitString[50] = {0};
 } adVariables; // home assistand auto discover
 
 const char bmeValue[4][12] = {"temperature","pressure","altitude","humidity"};
@@ -15,7 +17,7 @@ const char bmeUnits[4][5] = {"°C","mbar","m","%"};
 //const char vs[4] = "_vs"; //placeholder for insert "_vs" for valuestring is used instead of value
 //const char[4] noVs = {0}; //empty, no Valuestring
 
-const char adValueMbus[] PROGMEM = R"rawliteral({"unique_id":"%s_%u_%s","default_entity_id":"sensor.%s_%u_%s","state_topic":"%s/MBus/%u_%s","name":"%u_%s","value_template":"{{value_json if value_json is defined else 0}}","unit_of_meas":"%s","state_class":"%s","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
+const char adValueMbus[] PROGMEM = R"rawliteral({"unique_id":"%s_%u_%s","default_entity_id":"sensor.%s_%u_%s","state_topic":"%s/MBus/%u_%s","name":"%u_%s","value_template":"{{value_json if value_json is defined else 0}}",%s%s"device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
 const char adTopicMbus[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/%u_%s/config)rawliteral";
 
 const char adValueSensor[] PROGMEM = R"rawliteral({"unique_id":"%s_Sensor%u","default_entity_id":"sensor.%s_Sensor%u","state_topic":"%s/OneWire/S%u","name":"Sensor%u","value_template":"{{value_json if value_json is defined else 0}}","unit_of_meas":"°C","state_class":"measurement","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},"device_class":"temperature","availability_mode":"all"})rawliteral";
@@ -46,7 +48,7 @@ static const headerAdField headerAdFields[] = {
 
 #define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
 
-const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"M-Bus %s","value_template":"{{value_json if value_json is defined else 0}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
+const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"M-Bus %s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
 const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%s/config)rawliteral";
 
 void haHandoverHeader(){
@@ -74,12 +76,18 @@ void haHandoverMbus(uint8_t haCounter, bool engelmann){ // haCounter is the "i+1
   if(adVariables.deviceClass[0] != 0){
     strcpy(adVariables.deviceClassString,String("\"device_class\": \"" + String(adVariables.deviceClass) + "\",").c_str());
   }
-  sprintf(adVariables.bufferValue,adValueMbus,userData.mbusinoName,haCounter,adVariables.haName,userData.mbusinoName,haCounter,adVariables.haName,userData.mbusinoName,haCounter,adVariables.haName,haCounter,adVariables.haName,adVariables.haUnits,adVariables.stateClass,userData.mbusinoName,userData.mbusinoName,MBUSINO_VERSION,adVariables.deviceClassString);
+  if(adVariables.stateClass[0] != 0){
+    strcpy(adVariables.stateClassString,String("\"state_class\": \"" + String(adVariables.stateClass) + "\"," ).c_str());
+  }
+  if(adVariables.haUnits[0] != 0){
+    strcpy(adVariables.unitString,String("\"unit_of_meas\": \"" + String(adVariables.haUnits) + "\"," ).c_str());
+  }
+  sprintf(adVariables.bufferValue,adValueMbus,userData.mbusinoName,haCounter,adVariables.haName,userData.mbusinoName,haCounter,adVariables.haName,userData.mbusinoName,haCounter,adVariables.haName,haCounter,adVariables.haName,adVariables.unitString,adVariables.stateClassString,userData.mbusinoName,userData.mbusinoName,MBUSINO_VERSION,adVariables.deviceClassString);
   sprintf(adVariables.bufferTopic,adTopicMbus,userData.mbusinoName,haCounter,adVariables.haName);
   client.publish(adVariables.bufferTopic, adVariables.bufferValue, true); 
 
   if (haCounter == 4 && engelmann == true){  // Sensostar Bugfix --> comment it out if you use not a Sensostar   
-    sprintf(adVariables.bufferValue,adValueMbus,userData.mbusinoName,haCounter,"power_calc",userData.mbusinoName,haCounter,"power_calc",userData.mbusinoName,haCounter,"power_calc",haCounter,"power_calc",adVariables.haUnits,adVariables.stateClass,userData.mbusinoName,userData.mbusinoName,MBUSINO_VERSION,adVariables.deviceClassString);
+    sprintf(adVariables.bufferValue,adValueMbus,userData.mbusinoName,haCounter,"power_calc",userData.mbusinoName,haCounter,"power_calc",userData.mbusinoName,haCounter,"power_calc",haCounter,"power_calc",adVariables.unitString,adVariables.stateClassString,userData.mbusinoName,userData.mbusinoName,MBUSINO_VERSION,adVariables.deviceClassString);
     sprintf(adVariables.bufferTopic,adTopicMbus,userData.mbusinoName,haCounter,"power_calc");
     client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);                   
   } 
@@ -89,7 +97,9 @@ void haHandoverMbus(uint8_t haCounter, bool engelmann){ // haCounter is the "i+1
   adVariables.deviceClass[0] = 0;
   adVariables.deviceClassString[0] = 0;
   adVariables.stateClass[0] = 0;
+  adVariables.stateClassString[0] = 0;
   adVariables.haUnits[0] = 0;
+  adVariables.unitString[0] = 0;
 }
 
 void haHandoverOw(uint8_t haCounter){
