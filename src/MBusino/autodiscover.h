@@ -48,7 +48,7 @@ static const headerAdField headerAdFields[] = {
 
 #define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
 
-const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"M-Bus %s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
+const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"%s","value_template":"{{value_json.value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
 const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%s/config)rawliteral";
 
 void haHandoverHeader(){
