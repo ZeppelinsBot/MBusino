@@ -42,8 +42,8 @@ static const headerAdField headerAdFields[] = {
   {"status",          "Status",          ""},
   {"access_counter",  "Access Counter",  ""},
   {"battery_low",     "Battery Low",     ""},
-  {"temporary_error", "Temporary Error", "problem"},
-  {"permanent_error", "Permanent Error", "problem"},
+  {"temporary_error", "Temporary Error", ""},
+  {"permanent_error", "Permanent Error", ""},
 };
 
 #define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
