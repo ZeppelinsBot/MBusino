@@ -41,8 +41,8 @@ static const headerAdField headerAdFields[] = {
   {"medium",          "Medium",          "", ""},
   {"version",         "Version",         "", ""},
   {"status",          "Status",          "", ""},
-  {"access_counter",  "Access Counter",  "", "total_increasing"},
-  {"battery_low",     "Battery Low",     "battery", ""},
+  {"access_counter",  "Access Counter",  "", ""},
+  {"battery_low",     "Battery Low",     "", ""},
   {"temporary_error", "Temporary Error", "", ""},
   {"permanent_error", "Permanent Error", "", ""},
 };
