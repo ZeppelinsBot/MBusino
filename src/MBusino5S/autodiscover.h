@@ -65,6 +65,45 @@ void haHandoverBME(){
   }
 }
 
+// --- Header autodiscovery ---
+struct headerAdField {
+  const char* topicSuffix;
+  const char* haName;
+};
+
+static const headerAdField headerAdFields[] = {
+  {"address",         "Address"},
+  {"id",              "ID"},
+  {"manufacturer",    "Manufacturer"},
+  {"medium",          "Medium"},
+  {"version",         "Version"},
+  {"status",          "Status"},
+  {"access_counter",  "Access Counter"},
+  {"battery_low",     "Battery Low"},
+  {"temporary_error", "Temporary Error"},
+  {"permanent_error", "Permanent Error"},
+};
+
+#define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
+
+const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%u_%s","default_entity_id":"sensor.%s_header_%u_%s","state_topic":"%s/MBus/SlaveAddress%u/header/%s","name":"Addr%u_%s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},"availability_mode":"all"})rawliteral";
+const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%u_%s/config)rawliteral";
+
+void haHandoverHeader(uint8_t address){
+  for(uint8_t i = 0; i < HEADER_AD_FIELDS_COUNT; i++){
+    sprintf(adVariables.bufferValue, adValueHeader,
+      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
+      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
+      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
+      address, headerAdFields[i].haName,
+      userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION);
+    sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, address, headerAdFields[i].topicSuffix);
+    client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);
+    adVariables.bufferTopic[0] = 0;
+    adVariables.bufferValue[0] = 0;
+  }
+}
+
 
 
 /*

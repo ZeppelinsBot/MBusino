@@ -743,12 +743,14 @@ void loop() {
               }
 
               int packet_size = mbus_data[1] + 6; 
-              JsonDocument jsonBuffer;
-              JsonArray root = jsonBuffer.add<JsonArray>();  
-              fields = payload.decode(&mbus_data[Startadd], packet_size - Startadd - 2, root); 
+              JsonDocument doc;
+              JsonObject headerObj = doc["header"].to<JsonObject>();
+              bool headerOk = payload.decodeHeader(mbus_data, packet_size, headerObj);
+              JsonArray recordsArr = doc["records"].to<JsonArray>();  
+              fields = payload.decodeRecords(&mbus_data[Startadd], packet_size - Startadd - 2, recordsArr); 
               address = mbus_data[5]; 
               
-              serializeJson(root, jsonstring);
+              serializeJson(doc, jsonstring);
               client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/error").c_str(), String(payload.getError()).c_str());  // kann auskommentiert werden wenn es läuft
               client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/jsonstring").c_str(), jsonstring);  
               client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/fcb").c_str(), String(fcb[currentAddressCounter]).c_str());      
@@ -780,17 +782,49 @@ void loop() {
           if(millis() - timerMbusDecoded > 100){  
             mbusLoopStatus = 0;
             shc = true;
-            JsonDocument root;
-            deserializeJson(root, jsonstring); // load the json from a global array
+            JsonDocument doc;
+            deserializeJson(doc, jsonstring);
+            JsonObject headerObj = doc["header"];
+            JsonArray recordsArr = doc["records"];
             jsonstring[0] = 0;
 
+            // Publish M-Bus header via MQTT
+            if (!headerObj.isNull()) {
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/address").c_str(),
+                             String(headerObj["a_field"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/id").c_str(),
+                             headerObj["id"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/manufacturer").c_str(),
+                             headerObj["manufacturer"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/medium").c_str(),
+                             headerObj["medium"].as<const char*>());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/version").c_str(),
+                             String(headerObj["version"].as<int>()).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/status").c_str(),
+                             String(headerObj["status"].as<int>(), HEX).c_str());
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/access_counter").c_str(),
+                             String(headerObj["access_counter"].as<int>()).c_str());
+              JsonObject statusDetails = headerObj["status_details"];
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/battery_low").c_str(),
+                             statusDetails["battery_low"].as<bool>() ? "on" : "off");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/temporary_error").c_str(),
+                             statusDetails["temporary_error"].as<bool>() ? "on" : "off");
+              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/permanent_error").c_str(),
+                             statusDetails["permanent_error"].as<bool>() ? "on" : "off");
+            }
+
+            // Header autodiscovery
+            if(userData.haAutodisc == true && adMbusMessageCounter == 3){
+              haHandoverHeader(address);
+            }
+
             for (uint8_t i=0; i<fields; i++) {
-              uint8_t code = root[i]["code"].as<int>();
-              const char* name = root[i]["name"];
-              const char* units = root[i]["units"];           
-              double value = root[i]["value_scaled"].as<double>();
-              const char* valueString = root[i]["value_string"];   
-              bool telegramFollow = root[i]["telegramFollow"].as<int>();    
+              uint8_t code = recordsArr[i]["code"].as<int>();
+              const char* name = recordsArr[i]["name"];
+              const char* units = recordsArr[i]["units"];           
+              double value = recordsArr[i]["value_scaled"].as<double>();
+              const char* valueString = recordsArr[i]["value_string"];   
+              bool telegramFollow = recordsArr[i]["telegramFollow"].as<int>();    
 
               if(userData.haAutodisc == true && adMbusMessageCounter == 3){  //every 254 message is a HA autoconfig message
                 strcpy(adVariables.haName,name);
@@ -812,8 +846,8 @@ void loop() {
                 //client.publish(String(String(userData.mbusinoName) +"/MBus/SlaveAddress"+String(address)+ "/MBus/"+String(i+1)+"_"+String(name)+"_in_"+String(units)), String(value,3).c_str());
 
                 if (i == 3 && engelmann == true){  // Sensostar Bugfix --> comment it out if you use not a Sensostar
-                  float flow = root[5]["value_scaled"].as<float>();
-                  float delta = root[9]["value_scaled"].as<float>();
+                  float flow = recordsArr[5]["value_scaled"].as<float>();
+                  float delta = recordsArr[9]["value_scaled"].as<float>();
                   float calc_power = delta * flow * 1163;          
                   client.publish(String(String(userData.mbusinoName) +"/MBus/SlaveAddress"+String(address)+ "/4_power_calc").c_str(), String(calc_power).c_str());                    
                 }           
