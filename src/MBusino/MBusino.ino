@@ -40,7 +40,7 @@ HardwareSerial MbusSerial(1);
 MBusCom mbus(&MbusSerial,37,39);
 #endif
 
-#define MBUSINO_VERSION "1.0.2"
+#define MBUSINO_VERSION "1.0.3"
 
 #define MBUS_ADDRESS 254
 
