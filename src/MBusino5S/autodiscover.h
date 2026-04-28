@@ -67,21 +67,20 @@ void haHandoverBME(){
 
 // --- Header autodiscovery ---
 struct headerAdField {
-  const char* topicSuffix;
-  const char* haName;
+  const char* jsonKey;
 };
 
 static const headerAdField headerAdFields[] = {
-  {"address",         "Address"},
-  {"id",              "ID"},
-  {"manufacturer",    "Manufacturer"},
-  {"medium",          "Medium"},
-  {"version",         "Version"},
-  {"status",          "Status"},
-  {"access_counter",  "Access Counter"},
-  {"battery_low",     "Battery Low"},
-  {"temporary_error", "Temporary Error"},
-  {"permanent_error", "Permanent Error"},
+  {"address"},
+  {"id"},
+  {"manufacturer"},
+  {"medium"},
+  {"version"},
+  {"status"},
+  {"access_counter"},
+  {"battery_low"},
+  {"temporary_error"},
+  {"permanent_error"},
 };
 
 #define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
@@ -92,17 +91,40 @@ const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header
 void haHandoverHeader(uint8_t address){
   for(uint8_t i = 0; i < HEADER_AD_FIELDS_COUNT; i++){
     sprintf(adVariables.bufferValue, adValueHeader,
-      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
-      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
-      userData.mbusinoName, address, headerAdFields[i].topicSuffix,
-      address, headerAdFields[i].haName,
+      userData.mbusinoName, address, headerAdFields[i].jsonKey,
+      userData.mbusinoName, address, headerAdFields[i].jsonKey,
+      userData.mbusinoName, address, headerAdFields[i].jsonKey,
+      address, headerAdFields[i].jsonKey,
       userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION);
-    sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, address, headerAdFields[i].topicSuffix);
+    sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, address, headerAdFields[i].jsonKey);
     client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);
     adVariables.bufferTopic[0] = 0;
     adVariables.bufferValue[0] = 0;
   }
 }
+
+// --- Header MQTT publish ---
+enum HeaderFieldType { HT_STR, HT_INT, HT_HEX, HT_BOOL_NESTED };
+
+struct headerPublishField {
+  const char* jsonKey;
+  HeaderFieldType type;
+};
+
+static const headerPublishField headerPublishFields[] = {
+  {"address",        HT_INT},
+  {"id",             HT_STR},
+  {"manufacturer",   HT_STR},
+  {"medium",         HT_STR},
+  {"version",        HT_INT},
+  {"status",         HT_HEX},
+  {"access_counter", HT_INT},
+};
+
+#define HEADER_PUBLISH_COUNT (sizeof(headerPublishFields) / sizeof(headerPublishFields[0]))
+
+static const char* headerStatusKeys[] = {"battery_low", "temporary_error", "permanent_error"};
+#define HEADER_STATUS_COUNT (sizeof(headerStatusKeys) / sizeof(headerStatusKeys[0]))
 
 
 

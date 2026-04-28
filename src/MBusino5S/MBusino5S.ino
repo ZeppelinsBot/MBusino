@@ -790,27 +790,22 @@ void loop() {
 
             // Publish M-Bus header via MQTT
             if (!headerObj.isNull()) {
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/address").c_str(),
-                             String(headerObj["a_field"].as<int>()).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/id").c_str(),
-                             headerObj["id"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/manufacturer").c_str(),
-                             headerObj["manufacturer"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/medium").c_str(),
-                             headerObj["medium"].as<const char*>());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/version").c_str(),
-                             String(headerObj["version"].as<int>()).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/status").c_str(),
-                             String(headerObj["status"].as<int>(), HEX).c_str());
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/access_counter").c_str(),
-                             String(headerObj["access_counter"].as<int>()).c_str());
-              JsonObject statusDetails = headerObj["status_details"];
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/battery_low").c_str(),
-                             statusDetails["battery_low"].as<bool>() ? "on" : "off");
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/temporary_error").c_str(),
-                             statusDetails["temporary_error"].as<bool>() ? "on" : "off");
-              client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress"+String(address)+ "/header/permanent_error").c_str(),
-                             statusDetails["permanent_error"].as<bool>() ? "on" : "off");
+              for(uint8_t i = 0; i < HEADER_PUBLISH_COUNT; i++){
+                char valBuf[20] = {0};
+                const char* val = nullptr;
+                switch(headerPublishFields[i].type){
+                  case HT_STR: val = headerObj[headerPublishFields[i].jsonKey].as<const char*>(); break;
+                  case HT_INT: snprintf(valBuf, sizeof(valBuf), "%d", headerObj[headerPublishFields[i].jsonKey].as<int>()); val = valBuf; break;
+                  case HT_HEX: snprintf(valBuf, sizeof(valBuf), "%x", headerObj[headerPublishFields[i].jsonKey].as<int>()); val = valBuf; break;
+                  default: break;
+                }
+                if(val) client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress" + String(address) + "/header/" + headerPublishFields[i].jsonKey).c_str(), val);
+              }
+              JsonObject sd = headerObj["status_details"];
+              for(uint8_t i = 0; i < HEADER_STATUS_COUNT; i++){
+                client.publish(String(String(userData.mbusinoName) + "/MBus/SlaveAddress" + String(address) + "/header/" + headerStatusKeys[i]).c_str(),
+                               sd[headerStatusKeys[i]].as<bool>() ? "on" : "off");
+              }
             }
 
             // Header autodiscovery
