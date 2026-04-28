@@ -31,37 +31,32 @@ struct headerAdField {
   const char* topicSuffix;
   const char* haName;
   const char* deviceClass;
-  const char* stateClass;
 };
 
 static const headerAdField headerAdFields[] = {
-  {"address",         "Address",         "", ""},
-  {"id",              "ID",              "", ""},
-  {"manufacturer",    "Manufacturer",    "", ""},
-  {"medium",          "Medium",          "", ""},
-  {"version",         "Version",         "", ""},
-  {"status",          "Status",          "", ""},
-  {"access_counter",  "Access Counter",  "", ""},
-  {"battery_low",     "Battery Low",     "", ""},
-  {"temporary_error", "Temporary Error", "", ""},
-  {"permanent_error", "Permanent Error", "", ""},
+  {"address",         "Address",         ""},
+  {"id",              "ID",              ""},
+  {"manufacturer",    "Manufacturer",    ""},
+  {"medium",          "Medium",          ""},
+  {"version",         "Version",         ""},
+  {"status",          "Status",          ""},
+  {"access_counter",  "Access Counter",  ""},
+  {"battery_low",     "Battery Low",     ""},
+  {"temporary_error", "Temporary Error", ""},
+  {"permanent_error", "Permanent Error", ""},
 };
 
 #define HEADER_AD_FIELDS_COUNT (sizeof(headerAdFields) / sizeof(headerAdFields[0]))
 
-const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"%s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s%s"availability_mode":"all"})rawliteral";
+const char adValueHeader[] PROGMEM = R"rawliteral({"unique_id":"%s_header_%s","default_entity_id":"sensor.%s_header_%s","state_topic":"%s/MBus/header/%s","name":"%s","value_template":"{{value}}","device":{"ids": ["%s"],"name":"%s","manufacturer": "MBusino","mdl":"V%s"},%s"availability_mode":"all"})rawliteral";
 const char adTopicHeader[] PROGMEM = R"rawliteral(homeassistant/sensor/%s/header_%s/config)rawliteral";
 
 
 void haHandoverHeader(){
   for(uint8_t i = 0; i < HEADER_AD_FIELDS_COUNT; i++){
     char dcString[50] = {0};
-    char scString[50] = {0};
     if(headerAdFields[i].deviceClass[0] != 0){
       sprintf(dcString, "\"device_class\": \"%s\",", headerAdFields[i].deviceClass);
-    }
-    if(headerAdFields[i].stateClass[0] != 0){
-      sprintf(scString, "\"state_class\": \"%s\",", headerAdFields[i].stateClass);
     }
     sprintf(adVariables.bufferValue, adValueHeader,
       userData.mbusinoName, headerAdFields[i].topicSuffix,
@@ -69,7 +64,7 @@ void haHandoverHeader(){
       userData.mbusinoName, headerAdFields[i].topicSuffix,
       headerAdFields[i].haName,
       userData.mbusinoName, userData.mbusinoName, MBUSINO_VERSION,
-      dcString, scString);
+      dcString);
     sprintf(adVariables.bufferTopic, adTopicHeader, userData.mbusinoName, headerAdFields[i].topicSuffix);
     client.publish(adVariables.bufferTopic, adVariables.bufferValue, true);
     adVariables.bufferTopic[0] = 0;
