@@ -125,11 +125,11 @@ const char index_html[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <h1>MBusino Slave Simulator</h1>
-  <div class="version">%s &bull; <a href="/update">OTA Update</a></div>
+  <div class="version">v__VERSION__ &bull; <a href="/update">OTA Update</a></div>
 
   <div class="card">
     <h2>Slave Address</h2>
-    <div class="current-addr" id="currentAddr">%d</div>
+    <div class="current-addr" id="currentAddr">-</div>
     <div class="form-row">
       <input type="number" id="newAddr" min="1" max="254" placeholder="1-254">
       <button class="btn-primary" onclick="setAddress()">Set</button>
@@ -243,6 +243,7 @@ const char index_html[] PROGMEM = R"rawliteral(
       fetch('/stats')
         .then(r => r.json())
         .then(d => {
+          document.getElementById('currentAddr').innerText = d.address;
           document.getElementById('reqCount').innerText = d.requests;
           document.getElementById('nkeCount').innerText = d.normalize;
           document.getElementById('dataCount').innerText = d.dataRequests;

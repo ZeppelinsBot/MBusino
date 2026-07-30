@@ -10,9 +10,7 @@ void setupWebServer() {
 
   // Main page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    char buf[4096];
-    snprintf(buf, sizeof(buf), index_html, SLAVE_VERSION, slaveAddress);
-    request->send(200, "text/html", buf);
+    request->send_P(200, "text/html", index_html);
   });
 
   // Get stats as JSON
