@@ -52,6 +52,12 @@ HardwareSerial MbusSerial(1);
 #define EEPROM_ADDR_FLAG 0
 #define EEPROM_ADDR_VALUE 1
 #define EEPROM_MAGIC 0xAB
+#define EEPROM_WIFI_FLAG 2
+#define EEPROM_WIFI_SSID_LEN 3
+#define EEPROM_WIFI_SSID 4       // 4..35 (max 32 chars)
+#define EEPROM_WIFI_PASS_LEN 36
+#define EEPROM_WIFI_PASS 37       // 37..99 (max 63 chars)
+#define EEPROM_MAGIC_WIFI 0xCD
 
 // WiFi defaults
 #define AP_SSID "MBusinoSlave"
@@ -82,8 +88,31 @@ bool debugMode = false;
 void setupWiFi() {
   Serial.println("WiFi: connecting...");
 
+  // Try saved credentials first
+  char savedSsid[33] = {0};
+  char savedPass[64] = {0};
+  bool hasWifiCreds = false;
+
+  EEPROM.begin(EEPROM_SIZE);
+  if (EEPROM.read(EEPROM_WIFI_FLAG) == EEPROM_MAGIC_WIFI) {
+    uint8_t ssidLen = EEPROM.read(EEPROM_WIFI_SSID_LEN);
+    uint8_t passLen = EEPROM.read(EEPROM_WIFI_PASS_LEN);
+    if (ssidLen > 0 && ssidLen <= 32) {
+      for (uint8_t i = 0; i < ssidLen; i++) savedSsid[i] = EEPROM.read(EEPROM_WIFI_SSID + i);
+      savedSsid[ssidLen] = 0;
+      for (uint8_t i = 0; i < passLen && i < 63; i++) savedPass[i] = EEPROM.read(EEPROM_WIFI_PASS + i);
+      savedPass[passLen] = 0;
+      hasWifiCreds = true;
+      Serial.printf("WiFi: found saved SSID '%s'\n", savedSsid);
+    }
+  }
+
   WiFi.mode(WIFI_STA);
-  WiFi.begin();
+  if (hasWifiCreds) {
+    WiFi.begin(savedSsid, savedPass);
+  } else {
+    WiFi.begin();  // fall back to NVS credentials
+  }
 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_TIMEOUT_MS) {

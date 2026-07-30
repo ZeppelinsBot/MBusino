@@ -63,6 +63,59 @@ void setupWebServer() {
     request->send(400, "text/plain", "invalid address");
   });
 
+  // Set WiFi credentials
+  server.on("/setWifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String url = request->url();
+    // Parse ssid= and pass= from query string
+    int ssidStart = url.indexOf("ssid=");
+    int passStart = url.indexOf("pass=");
+    if (ssidStart < 0) {
+      request->send(400, "text/plain", "missing ssid");
+      return;
+    }
+    ssidStart += 5;
+    int ssidEnd = url.indexOf('&', ssidStart);
+    if (ssidEnd < 0) ssidEnd = url.length();
+    String ssid = url.substring(ssidStart, ssidEnd);
+
+    String pass = "";
+    if (passStart >= 0) {
+      passStart += 5;
+      int passEnd = url.indexOf('&', passStart);
+      if (passEnd < 0) passEnd = url.length();
+      pass = url.substring(passStart, passEnd);
+    }
+
+    // URL-decode basic chars
+    ssid.replace("%20", " ");
+    pass.replace("%20", " ");
+    ssid.replace("+", " ");
+    pass.replace("+", " ");
+
+    Serial.printf("[WEB] /setWifi ssid='%s' pass='%s'\n", ssid.c_str(), "***");
+
+    if (ssid.length() == 0 || ssid.length() > 32) {
+      request->send(400, "text/plain", "invalid ssid");
+      return;
+    }
+    if (pass.length() > 63) {
+      request->send(400, "text/plain", "pass too long");
+      return;
+    }
+
+    EEPROM.begin(EEPROM_SIZE);
+    EEPROM.write(EEPROM_WIFI_FLAG, EEPROM_MAGIC_WIFI);
+    EEPROM.write(EEPROM_WIFI_SSID_LEN, ssid.length());
+    for (uint8_t i = 0; i < ssid.length(); i++) EEPROM.write(EEPROM_WIFI_SSID + i, ssid[i]);
+    EEPROM.write(EEPROM_WIFI_PASS_LEN, pass.length());
+    for (uint8_t i = 0; i < pass.length(); i++) EEPROM.write(EEPROM_WIFI_PASS + i, pass[i]);
+    EEPROM.commit();
+
+    request->send(200, "text/plain", "ok");
+    delay(500);
+    ESP.restart();
+  });
+
   // OTA Update
   server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/html", update_html);

@@ -138,6 +138,18 @@ const char index_html[] PROGMEM = R"rawliteral(
   </div>
 
   <div class="card">
+    <h2>WiFi Settings</h2>
+    <div class="form-row">
+      <input type="text" id="wifiSsid" placeholder="SSID" style="flex:2">
+      <input type="password" id="wifiPass" placeholder="Password" style="flex:2">
+    </div>
+    <div style="margin-top:10px">
+      <button class="btn-primary" onclick="setWifi()" style="width:100%">Save & Reboot</button>
+    </div>
+    <div id="wifiFlashMsg" class="flash-msg"></div>
+  </div>
+
+  <div class="card">
     <h2>Statistics</h2>
     <div class="stat-row">
       <span class="stat-label">Total Requests</span>
@@ -201,6 +213,30 @@ const char index_html[] PROGMEM = R"rawliteral(
       el.className = 'flash-msg ' + (isErr ? 'flash-err' : 'flash-ok');
       el.style.display = 'block';
       setTimeout(function(){ el.style.display = 'none'; }, 3000);
+    }
+
+    function setWifi() {
+      var ssid = document.getElementById('wifiSsid').value;
+      var pass = document.getElementById('wifiPass').value;
+      if (!ssid) { showWifiFlash('SSID required', true); return; }
+      fetch('/setWifi?ssid=' + encodeURIComponent(ssid) + '&pass=' + encodeURIComponent(pass))
+        .then(function(r) { return r.text(); })
+        .then(function(t) {
+          if (t === 'ok') {
+            showWifiFlash('Saved! Rebooting...', false);
+          } else {
+            showWifiFlash('Error: ' + t, true);
+          }
+        })
+        .catch(function(e) { showWifiFlash('Error: ' + e, true); });
+    }
+
+    function showWifiFlash(msg, isErr) {
+      var el = document.getElementById('wifiFlashMsg');
+      el.innerText = msg;
+      el.className = 'flash-msg ' + (isErr ? 'flash-err' : 'flash-ok');
+      el.style.display = 'block';
+      if (!isErr) setTimeout(function(){ el.style.display = 'none'; }, 5000);
     }
 
     function refreshStats() {
