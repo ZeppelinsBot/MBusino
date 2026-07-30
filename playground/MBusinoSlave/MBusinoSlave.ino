@@ -207,6 +207,7 @@ void setup() {
 
   // M-Bus UART
   Serial.println("[BOOT] MbusSerial.begin..."); Serial.flush();
+  MbusSerial.setRxBufferSize(271);
   MbusSerial.begin(MBUS_BAUD, SERIAL_8E1, MBUS_RX_PIN, MBUS_TX_PIN);
   Serial.println("[BOOT] MbusSerial done"); Serial.flush();
 
