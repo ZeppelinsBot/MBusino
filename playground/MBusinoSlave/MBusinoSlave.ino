@@ -183,12 +183,16 @@ void setup() {
   Serial.println();
   Serial.println("=== MBusino Slave Simulator ===");
   Serial.printf("Version: %s\n", SLAVE_VERSION);
+  Serial.flush();
 
   // LED
+  Serial.println("[BOOT] LED setup..."); Serial.flush();
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
+  Serial.println("[BOOT] LED done"); Serial.flush();
 
   // EEPROM - load saved address
+  Serial.println("[BOOT] EEPROM..."); Serial.flush();
   EEPROM.begin(EEPROM_SIZE);
   if (EEPROM.read(EEPROM_ADDR_FLAG) == EEPROM_MAGIC) {
     uint8_t saved = EEPROM.read(EEPROM_ADDR_VALUE);
@@ -196,17 +200,23 @@ void setup() {
       slaveAddress = saved;
     }
   }
-  Serial.printf("Slave address: %d (0x%02X)\n", slaveAddress, slaveAddress);
+  Serial.printf("[BOOT] Slave address: %d (0x%02X)\n", slaveAddress, slaveAddress);
+  Serial.flush();
 
   // M-Bus UART
+  Serial.println("[BOOT] MbusSerial.begin..."); Serial.flush();
   MbusSerial.begin(MBUS_BAUD, SERIAL_8E1, MBUS_RX_PIN, MBUS_TX_PIN);
-  Serial.printf("M-Bus UART: %d baud, 8E1, RX=%d TX=%d\n", MBUS_BAUD, MBUS_RX_PIN, MBUS_TX_PIN);
+  Serial.println("[BOOT] MbusSerial done"); Serial.flush();
 
   // WiFi
+  Serial.println("[BOOT] WiFi..."); Serial.flush();
   setupWiFi();
+  Serial.println("[BOOT] WiFi done"); Serial.flush();
 
   // Web server
+  Serial.println("[BOOT] WebServer..."); Serial.flush();
   setupWebServer();
+  Serial.println("[BOOT] WebServer done"); Serial.flush();
 
   // OTA
   ArduinoOTA.setPassword("mbusino");
