@@ -178,13 +178,8 @@ void sendDataResponse() {
   Serial.println();
   Serial.flush();
 
-  // Send in chunks — ESP32 C3 UART1 may corrupt long writes
-  #define TX_CHUNK 32
-  for (uint16_t i = 0; i < TELEGRAM_LEN; i += TX_CHUNK) {
-    uint16_t len = min((uint16_t)TX_CHUNK, (uint16_t)(TELEGRAM_LEN - i));
-    MbusSerial.write(telegram + i, len);
-    MbusSerial.flush();
-  }
+  // Send the complete frame
+  MbusSerial.write(telegram, TELEGRAM_LEN);
   dataRequestCount++;
 
   if (debugMode) {

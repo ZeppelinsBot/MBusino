@@ -23,14 +23,12 @@
 
 #define SLAVE_VERSION "1.0.0"
 
-// M-Bus UART (UART1)
-// GPIO 20/21 = USB-UART0 — CANNOT share with UART1!
-// Using GPIO 4/5 for M-Bus
+// M-Bus UART (same as MBusinoNano5S)
 HardwareSerial MbusSerial(1);
 
 // Pin definitions (ESP32 C3 SuperMini)
-#define MBUS_RX_PIN 4
-#define MBUS_TX_PIN 5
+#define MBUS_RX_PIN 20
+#define MBUS_TX_PIN 21
 #define LED_PIN LED_BUILTIN
 
 // M-Bus protocol constants
@@ -209,8 +207,7 @@ void setup() {
   Serial.println("[BOOT] MbusSerial.begin..."); Serial.flush();
   MbusSerial.setRxBufferSize(271);
   MbusSerial.begin(MBUS_BAUD, SERIAL_8E1, MBUS_RX_PIN, MBUS_TX_PIN);
-  Serial.println("[BOOT] MbusSerial done — releasing UART0 pins"); Serial.flush();
-  Serial.end();  // Release GPIO 20/21 from UART0 so UART1 has exclusive access
+  Serial.println("[BOOT] MbusSerial done"); Serial.flush();
   Serial.println("[BOOT] MbusSerial done"); Serial.flush();
 
   // WiFi
