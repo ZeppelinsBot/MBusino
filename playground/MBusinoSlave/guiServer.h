@@ -32,8 +32,10 @@ void setupWebServer() {
 
   // Set address
   server.on("/setAddress", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("addr")) {
-      int addr = request->getParam("addr")->value().toInt();
+    String addrStr = request->arg("addr");
+    Serial.printf("[WEB] setAddress called, addr=%s\n", addrStr.c_str());
+    if (addrStr.length() > 0) {
+      int addr = addrStr.toInt();
       if (addr >= 1 && addr <= 254) {
         slaveAddress = (uint8_t)addr;
         EEPROM.begin(EEPROM_SIZE);
