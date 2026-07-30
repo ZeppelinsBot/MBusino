@@ -31,7 +31,7 @@ HardwareSerial MbusSerial(1);
 // GPIO 20/21 = UART1 (M-Bus)
 #define MBUS_RX_PIN 20
 #define MBUS_TX_PIN 21
-#define LED_PIN 7
+#define LED_PIN LED_BUILTIN
 
 // M-Bus protocol constants
 #define MBUS_BAUD 2400
@@ -189,8 +189,8 @@ void setup() {
 
   // LED
   Serial.println("[BOOT] LED setup..."); Serial.flush();
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   Serial.println("[BOOT] LED done"); Serial.flush();
 
   // EEPROM - load saved address
