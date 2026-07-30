@@ -209,6 +209,8 @@ void setup() {
   Serial.println("[BOOT] MbusSerial.begin..."); Serial.flush();
   MbusSerial.setRxBufferSize(271);
   MbusSerial.begin(MBUS_BAUD, SERIAL_8E1, MBUS_RX_PIN, MBUS_TX_PIN);
+  Serial.println("[BOOT] MbusSerial done — releasing UART0 pins"); Serial.flush();
+  Serial.end();  // Release GPIO 20/21 from UART0 so UART1 has exclusive access
   Serial.println("[BOOT] MbusSerial done"); Serial.flush();
 
   // WiFi
