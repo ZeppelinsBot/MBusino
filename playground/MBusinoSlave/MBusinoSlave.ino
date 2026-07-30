@@ -27,9 +27,11 @@
 HardwareSerial MbusSerial(1);
 
 // Pin definitions (ESP32 C3 SuperMini)
+// GPIO 18/19 = USB D-/D+ — DO NOT USE for GPIO!
+// GPIO 20/21 = UART1 (M-Bus)
 #define MBUS_RX_PIN 20
 #define MBUS_TX_PIN 21
-#define LED_PIN 18
+#define LED_PIN 7
 
 // M-Bus protocol constants
 #define MBUS_BAUD 2400
