@@ -170,16 +170,12 @@ void sendDataResponse() {
   uint8_t telegram[TELEGRAM_LEN];
   prepareTelegram(telegram);
 
-  // Debug: dump first 35 bytes before sending
+  // Debug: dump full telegram before sending
   Serial.printf("[SLAVE] Sending %d bytes:\n", TELEGRAM_LEN);
-  for (uint16_t i = 0; i < 35 && i < TELEGRAM_LEN; i++) {
-    Serial.printf("%02X ", telegram[i]);
-    if ((i+1) % 16 == 0) Serial.println();
+  for (uint16_t i = 0; i < TELEGRAM_LEN; i++) {
+    Serial.printf("%02X", telegram[i]);
   }
   Serial.println();
-  Serial.printf("[SLAVE] CHK byte[%d]=%02X  STOP byte[%d]=%02X\n",
-    TELEGRAM_LEN-2, telegram[TELEGRAM_LEN-2],
-    TELEGRAM_LEN-1, telegram[TELEGRAM_LEN-1]);
   Serial.flush();
 
   // Send the complete frame
