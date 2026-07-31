@@ -21,7 +21,7 @@
 #include <ArduinoOTA.h>
 #include <EEPROM.h>
 
-#define SLAVE_VERSION "1.0.0"
+#define SLAVE_VERSION "1.1.0"
 
 // M-Bus UART (same as MBusinoNano5S)
 HardwareSerial MbusSerial(1);
@@ -144,7 +144,7 @@ void handleSerialCommands() {
     String input = Serial.readStringUntil('\n');
     input.trim();
     int addr = input.toInt();
-    if (addr >= 1 && addr <= 254) {
+    if (addr >= 1 && addr <= 250) {
       slaveAddress = (uint8_t)addr;
       EEPROM.begin(EEPROM_SIZE);
       EEPROM.write(EEPROM_ADDR_FLAG, EEPROM_MAGIC);
@@ -196,7 +196,7 @@ void setup() {
   EEPROM.begin(EEPROM_SIZE);
   if (EEPROM.read(EEPROM_ADDR_FLAG) == EEPROM_MAGIC) {
     uint8_t saved = EEPROM.read(EEPROM_ADDR_VALUE);
-    if (saved >= 1 && saved <= 254) {
+    if (saved >= 1 && saved <= 250) {
       slaveAddress = saved;
     }
   }

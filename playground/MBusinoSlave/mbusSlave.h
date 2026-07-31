@@ -168,10 +168,19 @@ void sendAck() {
 // --- Send data response with fixed telegram ---
 void sendDataResponse() {
   uint8_t telegram[TELEGRAM_LEN];
-  prepareTelegram(telegram);
+  uint8_t addr = rxBuf[2];
+
+  if (addr == BROADCAST_ADDR) {
+    // Address 254: send ORIGINAL telegram absolutely unchanged
+    memcpy(telegram, FIXED_TELEGRAM, TELEGRAM_LEN);
+    Serial.printf("[SLAVE] RAW telegram to address 254 (no patch):\n");
+  } else {
+    // Normal: patch address and recompute checksum
+    prepareTelegram(telegram);
+    Serial.printf("[SLAVE] Patched telegram to address %d:\n", addr);
+  }
 
   // Debug: dump full telegram before sending
-  Serial.printf("[SLAVE] Sending %d bytes:\n", TELEGRAM_LEN);
   for (uint16_t i = 0; i < TELEGRAM_LEN; i++) {
     Serial.printf("%02X", telegram[i]);
   }
@@ -184,7 +193,7 @@ void sendDataResponse() {
 
   if (debugMode) {
     Serial.printf("[SLAVE] Data response sent (%d bytes) to address 0x%02X\n",
-                  TELEGRAM_LEN, rxBuf[2]);
+                  TELEGRAM_LEN, addr);
   }
 }
 

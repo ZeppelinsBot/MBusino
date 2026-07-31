@@ -131,7 +131,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     <h2>Slave Address</h2>
     <div class="current-addr" id="currentAddr">-</div>
     <div class="form-row">
-      <input type="number" id="newAddr" min="1" max="254" placeholder="1-254">
+      <input type="number" id="newAddr" min="1" max="250" placeholder="1-250">
       <button class="btn-primary" onclick="setAddress()">Set</button>
     </div>
     <div id="flashMsg" class="flash-msg"></div>
@@ -188,8 +188,8 @@ const char index_html[] PROGMEM = R"rawliteral(
   <script>
     function setAddress() {
       var addr = document.getElementById('newAddr').value;
-      if (!addr || addr < 1 || addr > 254) {
-        showFlash('Invalid address (1-254)', true);
+      if (!addr || addr < 1 || addr > 250) {
+        showFlash('Invalid address (1-250)', true);
         return;
       }
       fetch('/setAddress?addr=' + addr)
