@@ -187,8 +187,29 @@ void sendDataResponse() {
   Serial.println();
   Serial.flush();
 
-  // Send the complete frame
-  MbusSerial.write(telegram, TELEGRAM_LEN);
+  // 1. Clear old RX garbage from buffer before responding
+  while (MbusSerial.available()) {
+    MbusSerial.read();
+  }
+
+  // 2. Send telegram byte-by-byte, reading TSS721A echo after each byte
+  //    Prevents RX FIFO overflow on ESP32-C3 which corrupts TX
+  for (uint16_t i = 0; i < TELEGRAM_LEN; i++) {
+    MbusSerial.write(telegram[i]);
+    while (MbusSerial.available() > 0) {
+      MbusSerial.read();  // discard TSS721A echo
+    }
+  }
+
+  // 3. Wait until TX is physically idle (last bit + stop bit sent)
+  //    uart_ll_is_tx_idle() busy-waits on hardware — no timeout
+  MbusSerial.flush();
+
+  // 4. Flush any remaining delayed echoes
+  while (MbusSerial.available()) {
+    MbusSerial.read();
+  }
+
   dataRequestCount++;
 
   if (debugMode) {
