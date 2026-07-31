@@ -200,9 +200,9 @@ void sendDataResponse() {
   uint8_t addr = rxBuf[2];
 
   if (addr == BROADCAST_ADDR) {
-    // Address 254: send TEST telegram (all zeros) for easy corruption analysis
-    memcpy(telegram, TEST_TELEGRAM, TELEGRAM_LEN);
-    Serial.printf("[SLAVE] TEST telegram (all zeros) to address 254:\n");
+    // Address 254: send ORIGINAL EFE telegram unchanged
+    memcpy(telegram, FIXED_TELEGRAM, TELEGRAM_LEN);
+    Serial.printf("[SLAVE] ORIGINAL EFE telegram to address 254:\n");
   } else {
     // Normal: patch address and recompute checksum
     prepareTelegram(telegram);
