@@ -193,9 +193,11 @@ void sendDataResponse() {
   }
 
   // 2. Send telegram byte-by-byte, reading TSS721A echo after each byte
-  //    Prevents RX FIFO overflow on ESP32-C3 which corrupts TX
+  //    delay(5) between bytes: gives C_ST capacitor on TSS721A time to recharge
+  //    from the bus (parasitic power). Prevents VST voltage drop after ~24 bytes.
   for (uint16_t i = 0; i < TELEGRAM_LEN; i++) {
     MbusSerial.write(telegram[i]);
+    delay(5);  // recharge pause for TSS721A supply capacitor
     while (MbusSerial.available() > 0) {
       MbusSerial.read();  // discard TSS721A echo
     }
