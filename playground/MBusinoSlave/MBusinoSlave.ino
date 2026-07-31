@@ -20,6 +20,7 @@
 #include <DNSServer.h>
 #include <ArduinoOTA.h>
 #include <EEPROM.h>
+#include "esp_pm.h"
 
 #define SLAVE_VERSION "1.1.0"
 
@@ -178,6 +179,15 @@ void handleSerialCommands() {
 
 // --- Arduino Setup ---
 void setup() {
+  // Lock CPU at 160MHz — prevents dynamic clock scaling that would
+  // shift the UART baud rate during M-Bus transmission
+  esp_pm_config_esp32c3_t pm_config = {
+    .max_freq_mhz = 160,
+    .min_freq_mhz = 160,
+    .light_sleep_enable = false
+  };
+  esp_pm_configure(&pm_config);
+
   Serial.begin(115200);
   delay(1000);
   Serial.println();
