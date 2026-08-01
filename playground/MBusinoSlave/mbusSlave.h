@@ -193,11 +193,13 @@ void sendDataResponse() {
   }
 
   // 2. Send telegram byte-by-byte, reading TSS721A echo after each byte
-  //    delay(5) between bytes: gives C_ST capacitor on TSS721A time to recharge
-  //    from the bus (parasitic power). Prevents VST voltage drop after ~24 bytes.
+  //    TSS721A CSC capacitor must recharge between bytes (parasitic power).
+  //    Baudrate-dependent delay per Zihatec/HWHardsoft (see transmit_delay_time()):
+  //    300=80ms, 600=50ms, 1200=20ms, 2400=10ms, 4800=5ms, 9600=1ms
+  //    Our baud rate: 2400 → delay(10)
   for (uint16_t i = 0; i < TELEGRAM_LEN; i++) {
     MbusSerial.write(telegram[i]);
-    delay(5);  // recharge pause for TSS721A supply capacitor
+    delay(10);  // 2400 baud recharge pause for TSS721A CSC capacitor
     while (MbusSerial.available() > 0) {
       MbusSerial.read();  // discard TSS721A echo
     }
