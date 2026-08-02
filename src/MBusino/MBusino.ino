@@ -684,8 +684,10 @@ void loop() {
               if(valueString != NULL && strlen(valueString) > 0){
                 client.publish(String(String(userData.mbusinoName) + "/MBus/"+String(recordCounter+i+1)+"_vs_"+String(name)).c_str(), valueString); // send the value if a ascii value is aviable (variable length)
               }
-                client.publish(String(String(userData.mbusinoName) + "/MBus/"+String(recordCounter+i+1)+"_"+String(name)).c_str(), String(value,3).c_str()); // send the value if a real value is aviable (standard)
+              client.publish(String(String(userData.mbusinoName) + "/MBus/"+String(recordCounter+i+1)+"_"+String(name)).c_str(), String(value,3).c_str()); // send the value if a real value is aviable (standard)
+              if(units != NULL && strlen(units) > 0){
                 client.publish(String(String(userData.mbusinoName) + "/MBus/"+String(recordCounter+i+1)+"_"+String(name)+"_unit").c_str(), units);
+              }
                 //or only one message
                 //client.publish(String(String(userData.mbusinoName) + "/MBus/"+String(recordCounter+i+1)+"_"+String(name)+"_in_"+String(units)), String(value,3).c_str());
       
