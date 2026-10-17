@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - **Ethernet link mode setting in the web interface (MBusinoNano, MBusinoNano5S):** "automatic" (default, as described above), "auto negotiation" or "forced 10M full duplex". The fixed modes skip the automatic switching. The active mode is published as `<name>/settings/ethLinkMode`.
 - Verbose `[ETH]` / `[NET]` serial logging for every transport and link mode decision (boot state, mode switch, AP shutdown, Wi-Fi shutdown, Ethernet loss and recovery), so the behaviour can be followed on the serial console during a test.
+- **M-Bus debug page in the web interface (MBusinoNano, MBusinoNano5S):** `http://<MBusino>/mbus` shows the last 10 polls (time, address, status OK / no data / bad frame, raw telegram in hex) and the last decoded telegram (header and records). It refreshes every 2 s, shows the time until the next poll and has a "Poll now" button. The data is also available as JSON at `/mbus.json`. The page is linked on the setup page. The M-Bus state machine keeps running only while MQTT is connected (unchanged), so the page shows the telegrams of the running MQTT session.
 
 ### Changed
 
